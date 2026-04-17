@@ -90,6 +90,7 @@ async def async_setup_entry(
                     outdoor_info,
                     device_class=SensorDeviceClass.VOLTAGE, unit="V",
                     state_class=SensorStateClass.MEASUREMENT,
+                    suggested_display_precision=1,
                 ))
 
         # piezo rain sensors
@@ -118,6 +119,7 @@ async def async_setup_entry(
                     outdoor_info,
                     device_class=SensorDeviceClass.VOLTAGE, unit="V",
                     state_class=SensorStateClass.MEASUREMENT,
+                    suggested_display_precision=1,
                 ))
 
     # ═══════════════════════════════════════════════════════
@@ -150,6 +152,7 @@ async def async_setup_entry(
                 rain_info,
                 device_class=SensorDeviceClass.VOLTAGE, unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ))
 
     # ═══════════════════════════════════════════════════════
@@ -163,6 +166,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.TEMPERATURE,
                 unit=UnitOfTemperature.CELSIUS,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, "indoor_humidity", "Humidity",
@@ -170,6 +174,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.HUMIDITY,
                 unit=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=0,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, "rel_pressure", "Relative Pressure",
@@ -177,6 +182,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.PRESSURE,
                 unit=UnitOfPressure.HPA,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, "abs_pressure", "Absolute Pressure",
@@ -184,6 +190,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.PRESSURE,
                 unit=UnitOfPressure.HPA,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ),
         ])
 
@@ -201,6 +208,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.TEMPERATURE,
                 unit=UnitOfTemperature.CELSIUS,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, f"ch{ch}_humidity", "Humidity",
@@ -208,6 +216,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.HUMIDITY,
                 unit=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=0,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, f"ch{ch}_battery", "Battery",
@@ -233,6 +242,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.MOISTURE,
                 unit=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=0,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, f"soil{ch}_voltage", "Battery Voltage",
@@ -240,6 +250,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.VOLTAGE,
                 unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
                 coordinator, entry, f"soil{ch}_battery", "Battery",
@@ -385,7 +396,7 @@ class EcowittSimpleSensor(CoordinatorEntity, SensorEntity):
     def __init__(
         self, coordinator, entry, data_key, name, device_info,
         device_class=None, unit=None, state_class=None, icon=None,
-        value_map=None,
+        value_map=None, suggested_display_precision=None,
     ):
         super().__init__(coordinator)
         self._data_key = data_key
@@ -403,6 +414,8 @@ class EcowittSimpleSensor(CoordinatorEntity, SensorEntity):
             self._attr_state_class = state_class
         if icon:
             self._attr_icon = icon
+        if suggested_display_precision is not None:
+            self._attr_suggested_display_precision = suggested_display_precision
 
     @property
     def native_value(self):
