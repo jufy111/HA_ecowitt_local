@@ -1,0 +1,26 @@
+# Valve Daily Schedule Automation
+#
+# Add this via Settings > Automations > Add > Edit in YAML
+# Or paste into your automations.yaml file.
+#
+# Replace entity IDs with yours.
+
+alias: "Valve Daily Schedule"
+description: "Opens the water valve at the scheduled time for the configured duration"
+trigger:
+  - platform: time
+    at: input_datetime.valve_schedule_time
+condition:
+  - condition: state
+    entity_id: input_boolean.valve_schedule_enabled
+    state: "on"
+action:
+  - service: number.set_value
+    target:
+      entity_id: number.wfc01_00001234_run_minutes
+    data:
+      value: "{{ states('input_number.valve_schedule_duration') | int }}"
+  - service: button.press
+    target:
+      entity_id: button.wfc01_00001234_start_timed_run
+mode: single

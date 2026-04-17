@@ -1,0 +1,12 @@
+{
+  "domain": "ecowitt_gw",
+  "name": "Ecowitt Gateway (Local)",
+  "codeowners": ["@jufy111"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/jufy111/HA_ecowitt_local",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/jufy111/HA_ecowitt_local/issues",
+  "requirements": [],
+  "version": "0.4.5"
+}

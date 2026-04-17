@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Ecowitt Gateway",
+        "description": "Enter the local IP address of your Ecowitt gateway. Sensors and IoT devices will be discovered automatically.",
+        "data": {
+          "host": "IP Address",
+          "port": "Port",
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to gateway",
+      "unknown": "An unexpected error occurred"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ecowitt Gateway Options",
+        "data": {
+          "scan_interval": "Polling interval (seconds, 10-600)"
+        }
+      }
+    }
+  },
+  "services": {
+    "valve_open": {
+      "name": "Open Valve",
+      "description": "Open a water valve indefinitely (always on)",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "IoT device ID"
+        },
+        "model": {
+          "name": "Model",
+          "description": "Device model (1=WFC01)"
+        }
+      }
+    },
+    "valve_close": {
+      "name": "Close Valve",
+      "description": "Close / stop a water valve",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "IoT device ID"
+        },
+        "model": {
+          "name": "Model",
+          "description": "Device model"
+        }
+      }
+    },
+    "valve_open_timed": {
+      "name": "Open Valve (Timed)",
+      "description": "Open valve for N minutes with optional on/off cycling",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "IoT device ID"
+        },
+        "minutes": {
+          "name": "Minutes",
+          "description": "Run duration in minutes (1-1440)"
+        },
+        "on_time": {
+          "name": "Cycle On (seconds)",
+          "description": "Seconds on per cycle (0=continuous)"
+        },
+        "off_time": {
+          "name": "Cycle Off (seconds)",
+          "description": "Seconds off between cycles (0=continuous)"
+        },
+        "model": {
+          "name": "Model",
+          "description": "Device model"
+        }
+      }
+    },
+    "valve_open_volume": {
+      "name": "Open Valve (Volume)",
+      "description": "Open valve until N litres have flowed, with optional cycling",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "IoT device ID"
+        },
+        "litres": {
+          "name": "Litres",
+          "description": "Volume in litres (0.1-9999)"
+        },
+        "on_time": {
+          "name": "Cycle On (seconds)",
+          "description": "Seconds on per cycle (0=continuous)"
+        },
+        "off_time": {
+          "name": "Cycle Off (seconds)",
+          "description": "Seconds off between cycles (0=continuous)"
+        },
+        "model": {
+          "name": "Model",
+          "description": "Device model"
+        }
+      }
+    }
+  }
+}
