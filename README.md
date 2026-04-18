@@ -40,7 +40,7 @@ A Home Assistant custom component that integrates Ecowitt weather gateways over 
 
 ### Manual
 
-Copy the `custom_components/ecowitt_local` folder into your Home Assistant `config/custom_components/` directory and restart.
+Copy the `custom_components/ecowitt_lan` folder into your Home Assistant `config/custom_components/` directory and restart.
 
 ## Configuration
 
@@ -68,7 +68,7 @@ All entities use `has_entity_name`, so Home Assistant automatically combines the
 
 Four services are available for automating the WFC01 water valve:
 
-### `ecowitt_gw.valve_open`
+### `ecowitt_lan.valve_open`
 
 Opens the valve indefinitely.
 
@@ -76,7 +76,7 @@ Opens the valve indefinitely.
 |-----------|----------|-------------|
 | `device_id` | Yes | Numeric ID of the valve |
 
-### `ecowitt_gw.valve_close`
+### `ecowitt_lan.valve_close`
 
 Closes the valve immediately.
 
@@ -84,7 +84,7 @@ Closes the valve immediately.
 |-----------|----------|-------------|
 | `device_id` | Yes | Numeric ID of the valve |
 
-### `ecowitt_gw.valve_open_timed`
+### `ecowitt_lan.valve_open_timed`
 
 Opens the valve for a set duration with optional on/off cycling.
 
@@ -95,7 +95,7 @@ Opens the valve for a set duration with optional on/off cycling.
 | `on_time` | No | Cycle on-time in seconds (0 = continuous) |
 | `off_time` | No | Cycle off-time in seconds (0 = continuous) |
 
-### `ecowitt_gw.valve_open_volume`
+### `ecowitt_lan.valve_open_volume`
 
 Opens the valve until a target volume has been dispensed.
 
@@ -117,7 +117,7 @@ automation:
       - platform: time
         at: "06:00:00"
     action:
-      - service: ecowitt_gw.valve_open_timed
+      - service: ecowitt_lan.valve_open_timed
         data:
           device_id: 12345
           minutes: 30
@@ -133,7 +133,7 @@ automation:
         entity_id: sensor.rain_gauge_rain_rate
         above: 0
     action:
-      - service: ecowitt_gw.valve_close
+      - service: ecowitt_lan.valve_close
         data:
           device_id: 12345
 ```
@@ -144,7 +144,7 @@ automation:
 automation:
   - alias: "Cycled volume watering"
     action:
-      - service: ecowitt_gw.valve_open_volume
+      - service: ecowitt_lan.valve_open_volume
         data:
           device_id: 12345
           litres: 50
@@ -168,9 +168,9 @@ A ready-made automation blueprint that opens the WFC01 valve at a scheduled time
 
 **Install the blueprint:**
 
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjufy111%2FHA_ecowitt_local%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fvalve_daily_schedule.yaml)
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjufy111%2FHA_ecowitt_lan%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fvalve_daily_schedule.yaml)
 
-Or manually: copy `blueprints/automation/valve_daily_schedule.yaml` into your Home Assistant `config/blueprints/automation/ecowitt_local/` directory and restart.
+Or manually: copy `blueprints/automation/valve_daily_schedule.yaml` into your Home Assistant `config/blueprints/automation/ecowitt_lan/` directory and restart.
 
 Once imported, create an automation from the blueprint and select your valve's entities from the dropdowns.
 

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Home Assistant custom component (`ecowitt_gw`) that integrates Ecowitt weather gateways over the local LAN using HTTP polling. Supports weather sensors (WS90, WH25, WH31, WH51), rain gauges, and IoT devices (WFC01 water valve controller). Installed via HACS; requires HA 2024.1.0+.
+Home Assistant custom component (`ecowitt_lan`) that integrates Ecowitt weather gateways over the local LAN using HTTP polling. Supports weather sensors (WS90, WH25, WH31, WH51), rain gauges, and IoT devices (WFC01 water valve controller). Installed via HACS; requires HA 2024.1.0+.
 
 ## Deployment
 
 No build system, tests, or CI. Deploy by copying to the HA instance:
 ```bash
-scp -r ecowitt_local/ root@<HA_HOST>:/root/config/custom_components/ecowitt_local
+scp -r ecowitt_lan/ root@<HA_HOST>:/root/config/custom_components/ecowitt_lan
 ```
 
 ## Architecture
@@ -51,7 +51,7 @@ Ecowitt Gateway (LAN)
 
 ### Domain and Unique IDs
 
-- Integration domain: `ecowitt_gw` (used in `DOMAIN`, `manifest.json`, `hass.data` keys)
+- Integration domain: `ecowitt_lan` (used in `DOMAIN`, `manifest.json`, `hass.data` keys)
 - Entity unique IDs: `{entry_id}_{data_key}` for sensors, `{entry_id}_iot_{device_id}_{field}` for IoT entities
 
 ## Conventions

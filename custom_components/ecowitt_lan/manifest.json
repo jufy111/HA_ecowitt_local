@@ -1,5 +1,5 @@
 {
-  "domain": "ecowitt_local",
+  "domain": "ecowitt_lan",
   "name": "Ecowitt Gateway (Local)",
   "codeowners": ["@jufy111"],
   "config_flow": true,
@@ -8,5 +8,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/jufy111/HA_ecowitt_local/issues",
   "requirements": [],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

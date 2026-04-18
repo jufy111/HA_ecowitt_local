@@ -1,7 +1,7 @@
-"""Constants for ecowitt_gw integration."""
+"""Constants for ecowitt_lan integration."""
 from __future__ import annotations
 
-DOMAIN = "ecowitt_gw"
+DOMAIN = "ecowitt_lan"
 
 DEFAULT_PORT = 80
 DEFAULT_SCAN_INTERVAL = 10
