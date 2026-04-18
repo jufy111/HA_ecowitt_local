@@ -6,7 +6,7 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -40,7 +40,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EcowittWaterValveSwitch(CoordinatorEntity, SwitchEntity):
+class EcowittWaterValveSwitch(CoordinatorEntity[EcowittDataCoordinator], SwitchEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """
     Switch for WFC01 water valve.
     ON = always_on (indefinite). For timed/volume runs, use services or number entities.
@@ -64,16 +64,21 @@ class EcowittWaterValveSwitch(CoordinatorEntity, SwitchEntity):
     def _iot_data(self) -> dict[str, Any]:
         return self.coordinator.data.get(f"iot_{self._device_id}", {})
 
-    @property
-    def is_on(self) -> bool | None:
+    def _update_is_on(self) -> None:
         data = self._iot_data
         if not data:
-            return None
-        status = data.get("water_status", 0)
-        try:
-            return bool(int(status))
-        except (ValueError, TypeError):
-            return None
+            self._attr_is_on = None
+        else:
+            status = data.get("water_status", 0)
+            try:
+                self._attr_is_on = bool(int(status))
+            except (ValueError, TypeError):
+                self._attr_is_on = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_is_on()
+        self.async_write_ha_state()
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

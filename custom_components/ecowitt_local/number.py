@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -42,7 +42,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class _ValveParamNumber(CoordinatorEntity, NumberEntity):
+class _ValveParamNumber(CoordinatorEntity[EcowittDataCoordinator], NumberEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Base for valve parameter number entities (input only, no command).
 
     Stores its value in coordinator.valve_params so button entities can read it.
@@ -60,14 +60,21 @@ class _ValveParamNumber(CoordinatorEntity, NumberEntity):
         if key not in coordinator.valve_params:
             coordinator.valve_params[key] = default
 
-    @property
-    def native_value(self) -> float:
-        return self.coordinator.valve_params.get(
+        self._update_native_value()
+
+    def _update_native_value(self) -> None:
+        self._attr_native_value = self.coordinator.valve_params.get(
             f"{self._device_id}_{self._param_key}", 0
         )
 
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_native_value()
+        self.async_write_ha_state()
+
     async def async_set_native_value(self, value: float) -> None:
         self.coordinator.valve_params[f"{self._device_id}_{self._param_key}"] = value
+        self._attr_native_value = value
         self.async_write_ha_state()
 
 

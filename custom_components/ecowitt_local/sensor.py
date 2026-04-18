@@ -15,7 +15,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -356,7 +356,7 @@ def _create_wfc01_sensors(
 
 # ─── Entity Classes ─────────────────────────────────────
 
-class EcowittMappedSensor(CoordinatorEntity, SensorEntity):
+class EcowittMappedSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Sensor using const maps (COMMON_LIST_MAP, RAIN_MAP)."""
 
     def __init__(self, coordinator, entry, data_key, meta, device_info):
@@ -377,20 +377,18 @@ class EcowittMappedSensor(CoordinatorEntity, SensorEntity):
         if "icon" in meta:
             self._attr_icon = meta["icon"]
 
-    @property
-    def native_unit_of_measurement(self) -> str | None:
-        # Use the unit detected from the raw value string if available
+        self._attr_native_unit_of_measurement = meta.get("unit")
+        self._attr_native_value = coordinator.data.get(data_key)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
         detected = self.coordinator.data.get(f"{self._data_key}_unit")
-        if detected:
-            return detected
-        return self._meta.get("unit")
-
-    @property
-    def native_value(self):
-        return self.coordinator.data.get(self._data_key)
+        self._attr_native_unit_of_measurement = detected or self._meta.get("unit")
+        self._attr_native_value = self.coordinator.data.get(self._data_key)
+        self.async_write_ha_state()
 
 
-class EcowittSimpleSensor(CoordinatorEntity, SensorEntity):
+class EcowittSimpleSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Sensor reading a direct key from coordinator.data."""
 
     def __init__(
@@ -417,20 +415,27 @@ class EcowittSimpleSensor(CoordinatorEntity, SensorEntity):
         if suggested_display_precision is not None:
             self._attr_suggested_display_precision = suggested_display_precision
 
-    @property
-    def native_value(self):
+        self._update_native_value()
+
+    def _update_native_value(self) -> None:
         raw = self.coordinator.data.get(self._data_key)
         if raw is None:
-            return None
-        if self._value_map:
+            self._attr_native_value = None
+        elif self._value_map:
             try:
-                return self._value_map.get(int(raw), raw)
+                self._attr_native_value = self._value_map.get(int(raw), raw)
             except (ValueError, TypeError):
-                return raw
-        return raw
+                self._attr_native_value = raw
+        else:
+            self._attr_native_value = raw
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_native_value()
+        self.async_write_ha_state()
 
 
-class EcowittIoTSensor(CoordinatorEntity, SensorEntity):
+class EcowittIoTSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Sensor from nested iot_{id} dict."""
 
     def __init__(
@@ -456,24 +461,31 @@ class EcowittIoTSensor(CoordinatorEntity, SensorEntity):
         if icon:
             self._attr_icon = icon
 
-    @property
-    def native_value(self):
+        self._update_native_value()
+
+    def _update_native_value(self) -> None:
         iot_data = self.coordinator.data.get(f"iot_{self._device_id}", {})
         raw = iot_data.get(self._field)
         if raw is None:
-            return None
-        if self._value_map:
+            self._attr_native_value = None
+        elif self._value_map:
             try:
-                return self._value_map.get(int(raw), raw)
+                self._attr_native_value = self._value_map.get(int(raw), raw)
             except (ValueError, TypeError):
-                return raw
-        try:
-            return float(raw)
-        except (ValueError, TypeError):
-            return raw
+                self._attr_native_value = raw
+        else:
+            try:
+                self._attr_native_value = float(raw)
+            except (ValueError, TypeError):
+                self._attr_native_value = raw
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_native_value()
+        self.async_write_ha_state()
 
 
-class EcowittValveRunTimeSensor(CoordinatorEntity, SensorEntity):
+class EcowittValveRunTimeSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Local run time counter.
 
     - Resets to 0 when valve is turned on (via switch or button).
@@ -496,10 +508,7 @@ class EcowittValveRunTimeSensor(CoordinatorEntity, SensorEntity):
         self._counter: int = 0
         self._last_polled: int | None = None
         self._cancel_timer = None
-
-    @property
-    def native_value(self) -> int:
-        return self._counter
+        self._attr_native_value = 0
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -507,6 +516,7 @@ class EcowittValveRunTimeSensor(CoordinatorEntity, SensorEntity):
         if self._device_id in self.coordinator.reset_run_time:
             self.coordinator.reset_run_time.discard(self._device_id)
             self._counter = 0
+            self._attr_native_value = 0
             self._last_polled = None
 
         # Check polled value — adopt only if it changed since last poll
@@ -517,6 +527,7 @@ class EcowittValveRunTimeSensor(CoordinatorEntity, SensorEntity):
                 polled_int = int(polled)
                 if self._last_polled is None or polled_int != self._last_polled:
                     self._counter = polled_int
+                    self._attr_native_value = polled_int
                 self._last_polled = polled_int
             except (ValueError, TypeError):
                 pass
@@ -551,13 +562,14 @@ class EcowittValveRunTimeSensor(CoordinatorEntity, SensorEntity):
     @callback
     def _tick(self, _now) -> None:
         self._counter += 1
+        self._attr_native_value = self._counter
         self.async_write_ha_state()
 
     async def async_will_remove_from_hass(self) -> None:
         self._stop_timer()
 
 
-class EcowittSessionWaterUsageSensor(CoordinatorEntity, SensorEntity):
+class EcowittSessionWaterUsageSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Computed sensor: water_total - happen_water."""
 
     _attr_icon = "mdi:water-check"
@@ -572,14 +584,21 @@ class EcowittSessionWaterUsageSensor(CoordinatorEntity, SensorEntity):
         self._attr_name = "Session Water Usage"
         self._attr_device_info = device_info
 
-    @property
-    def native_value(self):
+        self._update_native_value()
+
+    def _update_native_value(self) -> None:
         iot_data = self.coordinator.data.get(f"iot_{self._device_id}", {})
         total = iot_data.get("water_total")
         start = iot_data.get("happen_water")
         if total is None or start is None:
-            return None
+            self._attr_native_value = None
+            return
         try:
-            return round(float(total) - float(start), 3)
+            self._attr_native_value = round(float(total) - float(start), 3)
         except (ValueError, TypeError):
-            return None
+            self._attr_native_value = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_native_value()
+        self.async_write_ha_state()

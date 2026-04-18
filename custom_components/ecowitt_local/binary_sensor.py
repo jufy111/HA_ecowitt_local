@@ -6,7 +6,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -52,7 +52,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EcowittIoTBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class EcowittIoTBinarySensor(CoordinatorEntity[EcowittDataCoordinator], BinarySensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Binary sensor from IoT device field."""
 
     _attr_has_entity_name = True
@@ -72,19 +72,26 @@ class EcowittIoTBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if icon:
             self._attr_icon = icon
 
-    @property
-    def is_on(self) -> bool | None:
+        self._update_is_on()
+
+    def _update_is_on(self) -> None:
         data = self.coordinator.data.get(f"iot_{self._device_id}", {})
         val = data.get(self._field)
         if val is None:
-            return None
-        try:
-            return bool(int(val))
-        except (ValueError, TypeError):
-            return None
+            self._attr_is_on = None
+        else:
+            try:
+                self._attr_is_on = bool(int(val))
+            except (ValueError, TypeError):
+                self._attr_is_on = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_is_on()
+        self.async_write_ha_state()
 
 
-class EcowittIoTRfState(CoordinatorEntity, BinarySensorEntity):
+class EcowittIoTRfState(CoordinatorEntity[EcowittDataCoordinator], BinarySensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """RF connectivity from device list."""
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
@@ -97,10 +104,17 @@ class EcowittIoTRfState(CoordinatorEntity, BinarySensorEntity):
         self._attr_name = "RF Connected"
         self._attr_device_info = device_info
 
-    @property
-    def is_on(self) -> bool | None:
+        self._update_is_on()
+
+    def _update_is_on(self) -> None:
         for dev in self.coordinator.iot_devices:
             if dev.get("id") == self._device_id:
                 rf = dev.get("rfnet_state")
-                return bool(int(rf)) if rf is not None else None
-        return None
+                self._attr_is_on = bool(int(rf)) if rf is not None else None
+                return
+        self._attr_is_on = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_is_on()
+        self.async_write_ha_state()

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -35,7 +35,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EcowittValveModeSelect(CoordinatorEntity, SelectEntity):
+class EcowittValveModeSelect(CoordinatorEntity[EcowittDataCoordinator], SelectEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """
     Shows the current operating mode of the valve.
     Read-only indicator derived from device state.
@@ -53,11 +53,13 @@ class EcowittValveModeSelect(CoordinatorEntity, SelectEntity):
         self._attr_name = "Run Mode"
         self._attr_device_info = iot_device_info(entry, device_id, model, iot_data)
 
-    @property
-    def current_option(self) -> str:
+        self._update_current_option()
+
+    def _update_current_option(self) -> None:
         data = self.coordinator.data.get(f"iot_{self._device_id}", {})
         if not data:
-            return "off"
+            self._attr_current_option = "off"
+            return
 
         status = data.get("water_status", 0)
         try:
@@ -66,7 +68,8 @@ class EcowittValveModeSelect(CoordinatorEntity, SelectEntity):
             status = 0
 
         if not status:
-            return "off"
+            self._attr_current_option = "off"
+            return
 
         always_on = data.get("always_on", 0)
         try:
@@ -75,7 +78,8 @@ class EcowittValveModeSelect(CoordinatorEntity, SelectEntity):
             always_on = 0
 
         if always_on:
-            return "always_on"
+            self._attr_current_option = "always_on"
+            return
 
         val_type = data.get("val_type", 1)
         try:
@@ -83,7 +87,12 @@ class EcowittValveModeSelect(CoordinatorEntity, SelectEntity):
         except (ValueError, TypeError):
             val_type = 1
 
-        return "volume" if val_type == 3 else "timed"
+        self._attr_current_option = "volume" if val_type == 3 else "timed"
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_current_option()
+        self.async_write_ha_state()
 
     async def async_select_option(self, option: str) -> None:
         """
