@@ -16,7 +16,9 @@ from .const import (
     DOMAIN,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENSORS_INFO_INTERVAL,
     CONF_SCAN_INTERVAL,
+    CONF_SENSORS_INFO_INTERVAL,
     SERVICE_VALVE_OPEN,
     SERVICE_VALVE_CLOSE,
     SERVICE_VALVE_OPEN_TIMED,
@@ -43,11 +45,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.data[CONF_HOST]
     port = entry.data.get(CONF_PORT, DEFAULT_PORT)
     scan_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    sensors_info_interval = entry.options.get(CONF_SENSORS_INFO_INTERVAL, DEFAULT_SENSORS_INFO_INTERVAL)
 
     session = async_get_clientsession(hass)
     client = EcowittApiClient(host, port, session=session)
 
-    coordinator = EcowittDataCoordinator(hass, client, scan_interval)
+    coordinator = EcowittDataCoordinator(hass, client, scan_interval, sensors_info_interval)
     await coordinator.async_discover_iot_devices()
     await coordinator.async_config_entry_first_refresh()
 
@@ -96,6 +99,8 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     ]
     new_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator.update_scan_interval(new_interval)
+    new_si_interval = entry.options.get(CONF_SENSORS_INFO_INTERVAL, DEFAULT_SENSORS_INFO_INTERVAL)
+    coordinator.update_sensors_info_interval(new_si_interval)
     await coordinator.async_request_refresh()
 
 

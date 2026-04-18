@@ -5,13 +5,16 @@ DOMAIN = "ecowitt_gw"
 
 DEFAULT_PORT = 80
 DEFAULT_SCAN_INTERVAL = 1
+DEFAULT_SENSORS_INFO_INTERVAL = 60
 MIN_SCAN_INTERVAL = 1
 MAX_SCAN_INTERVAL = 600
 
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_SENSORS_INFO_INTERVAL = "sensors_info_interval"
 
 # ── Endpoints ────────────────────────────────────────
 ENDPOINT_LIVEDATA = "/get_livedata_info"
+ENDPOINT_SENSORS_INFO = "/get_sensors_info"
 ENDPOINT_IOT_CMD = "/parse_quick_cmd_iot"
 ENDPOINT_IOT_DEVICE_LIST = "/get_iot_device_list"
 
@@ -150,4 +153,35 @@ BATTERY_LEVEL_MAP: dict[int, int] = {
     2: 40,
     1: 20,
     0: 0,
+}
+
+# Map sensor_info "type" -> device category used in coordinator.data keys.
+# Sensors with id "FFFFFFFF" are not present and should be skipped.
+SENSOR_TYPE_DEVICE_MAP: dict[str, str] = {
+    # WS90 (outdoor + piezo rain)
+    "48": "outdoor",
+    # WH69 / WH80 (outdoor)
+    "0": "outdoor",
+    "2": "outdoor",
+    # WH68 (solar & wind, outdoor)
+    "1": "outdoor",
+    # WH85 (wind & rain, outdoor)
+    "49": "outdoor",
+    # WH40 (rain gauge)
+    "3": "rain",
+    # WN20 (rain mini)
+    "70": "rain",
+    # WH25 (indoor temp/humi/pressure)
+    "4": "gateway",
+    # WH26 (temp & humidity)
+    "5": "gateway",
+    # WH31/WN31 Temp & Humidity CH1-CH8
+    "6": "ch1", "7": "ch2", "8": "ch3", "9": "ch4",
+    "10": "ch5", "11": "ch6", "12": "ch7", "13": "ch8",
+    # WH51 Soil Moisture CH1-CH8
+    "14": "soil1", "15": "soil2", "16": "soil3", "17": "soil4",
+    "18": "soil5", "19": "soil6", "20": "soil7", "21": "soil8",
+    # WH51 Soil Moisture CH9-CH16 (extended)
+    "58": "soil9", "59": "soil10", "60": "soil11", "61": "soil12",
+    "62": "soil13", "63": "soil14", "64": "soil15", "65": "soil16",
 }

@@ -8,6 +8,7 @@ import aiohttp
 
 from .const import (
     ENDPOINT_LIVEDATA,
+    ENDPOINT_SENSORS_INFO,
     ENDPOINT_IOT_CMD,
     ENDPOINT_IOT_DEVICE_LIST,
     VAL_TYPE_TIME,
@@ -45,6 +46,17 @@ class EcowittApiClient:
     # ── GET: Live sensor data ────────────────────────────
     async def async_get_livedata(self) -> dict[str, Any]:
         return await self._request("GET", ENDPOINT_LIVEDATA)
+
+    # ── GET: Sensor info (rssi, signal, ids) ───────────────
+    async def async_get_sensors_info(self) -> list[dict[str, Any]]:
+        sensors: list[dict[str, Any]] = []
+        for page in (1, 2):
+            result = await self._request(
+                "GET", f"{ENDPOINT_SENSORS_INFO}?page={page}"
+            )
+            if isinstance(result, list):
+                sensors.extend(result)
+        return sensors
 
     # ── GET: Discover IoT devices ────────────────────────
     async def async_get_iot_device_list(self) -> list[dict[str, Any]]:
@@ -148,7 +160,7 @@ class EcowittApiClient:
         method: str,
         endpoint: str,
         json_data: dict | None = None,
-    ) -> dict[str, Any]:
+    ) -> Any:
         url = f"{self._base_url}{endpoint}"
 
         if self._session is None or self._session.closed:

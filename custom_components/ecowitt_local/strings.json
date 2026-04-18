@@ -7,7 +7,8 @@
         "data": {
           "host": "IP Address",
           "port": "Port",
-          "scan_interval": "Polling interval (seconds)"
+          "scan_interval": "Polling interval (seconds)",
+          "sensors_info_interval": "Sensor info polling interval (seconds) — RSSI, signal"
         }
       }
     },
@@ -21,7 +22,8 @@
       "init": {
         "title": "Ecowitt Gateway Options",
         "data": {
-          "scan_interval": "Polling interval (seconds, 10-600)"
+          "scan_interval": "Polling interval (seconds, 1-600)",
+          "sensors_info_interval": "Sensor info polling interval (seconds, 1-600)"
         }
       }
     }

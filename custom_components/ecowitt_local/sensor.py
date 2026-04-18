@@ -82,6 +82,22 @@ async def async_setup_entry(
                         EcowittMappedSensor(coordinator, entry, key, meta, outdoor_info)
                     )
 
+            if "outdoor_rssi" in coordinator.data:
+                entities.append(EcowittSimpleSensor(
+                    coordinator, entry, "outdoor_rssi", "RSSI",
+                    outdoor_info,
+                    device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                    unit="dBm",
+                    state_class=SensorStateClass.MEASUREMENT,
+                ))
+            if "outdoor_signal" in coordinator.data:
+                entities.append(EcowittSimpleSensor(
+                    coordinator, entry, "outdoor_signal", "Signal",
+                    outdoor_info,
+                    icon="mdi:signal",
+                    state_class=SensorStateClass.MEASUREMENT,
+                ))
+
             if "ws90_cap_voltage" in coordinator.data:
                 entities.append(EcowittSimpleSensor(
                     coordinator, entry, "ws90_cap_voltage", "Capacitor Voltage",
@@ -151,6 +167,21 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.VOLTAGE, unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
                 suggested_display_precision=1,
+            ))
+        if "rain_rssi" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, "rain_rssi", "RSSI",
+                rain_info,
+                device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                unit="dBm",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
+        if "rain_signal" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, "rain_signal", "Signal",
+                rain_info,
+                icon="mdi:signal",
+                state_class=SensorStateClass.MEASUREMENT,
             ))
 
     # ═══════════════════════════════════════════════════════
@@ -228,6 +259,21 @@ async def async_setup_entry(
                 value_map=BATTERY_LEVEL_MAP,
             ),
         ])
+        if f"ch{ch}_rssi" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"ch{ch}_rssi", "RSSI",
+                ch_info,
+                device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                unit="dBm",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
+        if f"ch{ch}_signal" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"ch{ch}_signal", "Signal",
+                ch_info,
+                icon="mdi:signal",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
 
     # ═══════════════════════════════════════════════════════
     # SOIL DEVICES (1 device per channel)
@@ -262,6 +308,21 @@ async def async_setup_entry(
                 value_map=BATTERY_LEVEL_MAP,
             ),
         ])
+        if f"soil{ch}_rssi" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"soil{ch}_rssi", "RSSI",
+                soil_info,
+                device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                unit="dBm",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
+        if f"soil{ch}_signal" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"soil{ch}_signal", "Signal",
+                soil_info,
+                icon="mdi:signal",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
 
 
 

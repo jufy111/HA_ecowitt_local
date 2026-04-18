@@ -12,9 +12,11 @@ from .const import (
     DOMAIN,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SENSORS_INFO_INTERVAL,
     MIN_SCAN_INTERVAL,
     MAX_SCAN_INTERVAL,
     CONF_SCAN_INTERVAL,
+    CONF_SENSORS_INFO_INTERVAL,
 )
 
 
@@ -48,6 +50,9 @@ class EcowittGwConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_SCAN_INTERVAL: user_input.get(
                             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                         ),
+                        CONF_SENSORS_INFO_INTERVAL: user_input.get(
+                            CONF_SENSORS_INFO_INTERVAL, DEFAULT_SENSORS_INFO_INTERVAL
+                        ),
                     },
                 )
             except EcowittApiError:
@@ -65,6 +70,12 @@ class EcowittGwConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
                     vol.Optional(
                         CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
+                    ): vol.All(
+                        int,
+                        vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                    ),
+                    vol.Optional(
+                        CONF_SENSORS_INFO_INTERVAL, default=DEFAULT_SENSORS_INFO_INTERVAL
                     ): vol.All(
                         int,
                         vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
@@ -90,6 +101,9 @@ class EcowittGwOptionsFlow(config_entries.OptionsFlow):
         current_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
+        current_si_interval = self.config_entry.options.get(
+            CONF_SENSORS_INFO_INTERVAL, DEFAULT_SENSORS_INFO_INTERVAL
+        )
 
         return self.async_show_form(
             step_id="init",
@@ -98,6 +112,13 @@ class EcowittGwOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
                         default=current_interval,
+                    ): vol.All(
+                        int,
+                        vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+                    ),
+                    vol.Optional(
+                        CONF_SENSORS_INFO_INTERVAL,
+                        default=current_si_interval,
                     ): vol.All(
                         int,
                         vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),

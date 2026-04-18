@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 from typing import Any
 
@@ -12,7 +13,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api_client import EcowittApiClient, EcowittApiError
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, UNIT_MAP, UNIT_NORMALIZE
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, DEFAULT_SENSORS_INFO_INTERVAL, UNIT_MAP, UNIT_NORMALIZE, SENSOR_TYPE_DEVICE_MAP
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         hass: HomeAssistant,
         client: EcowittApiClient,
         scan_interval: int = DEFAULT_SCAN_INTERVAL,
+        sensors_info_interval: int = DEFAULT_SENSORS_INFO_INTERVAL,
     ) -> None:
         super().__init__(
             hass,
@@ -78,11 +80,19 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.iot_devices: list[dict[str, Any]] = []
         self.valve_params: dict[str, float] = {}
         self.reset_run_time: set[int] = set()
+        self._sensors_info_interval = sensors_info_interval
+        self._sensors_info_last: float = 0.0
+        self._sensors_info_cache: dict[str, Any] = {}
 
     def update_scan_interval(self, seconds: int) -> None:
         """Update polling interval (called from options flow)."""
         self.update_interval = timedelta(seconds=seconds)
         _LOGGER.info("Scan interval updated to %ds", seconds)
+
+    def update_sensors_info_interval(self, seconds: int) -> None:
+        """Update sensor info polling interval (called from options flow)."""
+        self._sensors_info_interval = seconds
+        _LOGGER.info("Sensors info interval updated to %ds", seconds)
 
     async def async_discover_iot_devices(self) -> list[dict[str, Any]]:
         """GET /get_iot_device_list to find all paired IoT devices."""
@@ -194,6 +204,34 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["has_outdoor"] = any(
                 k in data for k in ["common_0x02", "common_0x07"]
             )
+
+            # ── sensor info (rssi, signal) — throttled ───
+            now = time.monotonic()
+            if now - self._sensors_info_last >= self._sensors_info_interval:
+                try:
+                    sensors_info = await self.client.async_get_sensors_info()
+                    si_data: dict[str, Any] = {}
+                    for sensor in sensors_info:
+                        if sensor.get("id") == "FFFFFFFF":
+                            continue
+                        stype = str(sensor.get("type", ""))
+                        device_key = SENSOR_TYPE_DEVICE_MAP.get(stype)
+                        if not device_key:
+                            continue
+                        rssi = sensor.get("rssi")
+                        signal = sensor.get("signal")
+                        if rssi and rssi != "--":
+                            si_data[f"{device_key}_rssi"] = _safe_int(rssi)
+                        if signal and signal != "--":
+                            si_data[f"{device_key}_signal"] = _safe_int(signal)
+                        sid = sensor.get("id")
+                        if sid and sid != "FFFFFFFF":
+                            si_data[f"{device_key}_sensor_id"] = sid
+                    self._sensors_info_cache = si_data
+                    self._sensors_info_last = now
+                except EcowittApiError:
+                    _LOGGER.debug("Sensor info fetch failed, using cached")
+            data.update(self._sensors_info_cache)
 
             # ── Refresh IoT device list ──────────────────
             try:
