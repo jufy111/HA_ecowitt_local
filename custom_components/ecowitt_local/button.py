@@ -49,13 +49,13 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class EcowittValveTimedRunButton(CoordinatorEntity, ButtonEntity):
+class EcowittValveTimedRunButton(CoordinatorEntity[EcowittDataCoordinator], ButtonEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Press to open the valve for the configured minutes with cycle settings."""
 
     _attr_icon = "mdi:timer-play"
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, client, entry, device_id, model, device_info):
+    def __init__(self, coordinator: EcowittDataCoordinator, client, entry, device_id, model, device_info):
         super().__init__(coordinator)
         self._client = client
         self._device_id = device_id
@@ -81,13 +81,13 @@ class EcowittValveTimedRunButton(CoordinatorEntity, ButtonEntity):
         await self.coordinator.async_request_refresh()
 
 
-class EcowittValveVolumeRunButton(CoordinatorEntity, ButtonEntity):
+class EcowittValveVolumeRunButton(CoordinatorEntity[EcowittDataCoordinator], ButtonEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """Press to open the valve for the configured litres with cycle settings."""
 
     _attr_icon = "mdi:water-plus"
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, client, entry, device_id, model, device_info):
+    def __init__(self, coordinator: EcowittDataCoordinator, client, entry, device_id, model, device_info):
         super().__init__(coordinator)
         self._client = client
         self._device_id = device_id

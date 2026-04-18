@@ -59,40 +59,35 @@ class EcowittWaterValveSwitch(CoordinatorEntity[EcowittDataCoordinator], SwitchE
         self._attr_unique_id = f"{entry.entry_id}_iot_{device_id}_valve"
         self._attr_name = "Valve"
         self._attr_device_info = iot_device_info(entry, device_id, model, iot_data)
+        self._update_attrs()
 
     @property
     def _iot_data(self) -> dict[str, Any]:
         return self.coordinator.data.get(f"iot_{self._device_id}", {})
 
-    def _update_is_on(self) -> None:
+    def _update_attrs(self) -> None:
         data = self._iot_data
         if not data:
             self._attr_is_on = None
-        else:
-            status = data.get("water_status", 0)
-            try:
-                self._attr_is_on = bool(int(status))
-            except (ValueError, TypeError):
-                self._attr_is_on = None
+            self._attr_extra_state_attributes = {"device_id": self._device_id}
+            return
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        self._update_is_on()
-        self.async_write_ha_state()
+        status = data.get("water_status", 0)
+        try:
+            self._attr_is_on = bool(int(status))
+        except (ValueError, TypeError):
+            self._attr_is_on = None
 
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        data = self._iot_data
-        if not data:
-            return {"device_id": self._device_id}
-        attrs = {
+        val_type = data.get("val_type")
+        val_type_label: str = {1: "minutes", 3: "litres"}.get(int(val_type), "unknown") if val_type is not None else "unknown"
+        attrs: dict[str, Any] = {
             "device_id": self._device_id,
             "model": self._model,
             "water_status": data.get("water_status"),
             "water_action": data.get("water_action"),
             "always_on": data.get("always_on"),
-            "val_type": data.get("val_type"),
-            "val_type_label": {1: "minutes", 3: "litres"}.get(data.get("val_type"), "unknown"),
+            "val_type": val_type,
+            "val_type_label": val_type_label,
             "val": data.get("val"),
             "run_time_seconds": data.get("run_time"),
             "warning": data.get("warning"),
@@ -102,7 +97,12 @@ class EcowittWaterValveSwitch(CoordinatorEntity[EcowittDataCoordinator], SwitchE
             "flow_velocity_lpm": data.get("flow_velocity"),
             "water_temp_c": data.get("water_temp"),
         }
-        return {k: v for k, v in attrs.items() if v is not None}
+        self._attr_extra_state_attributes = {k: v for k, v in attrs.items() if v is not None}
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._update_attrs()
+        self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs) -> None:
         """Open valve (always on)."""
