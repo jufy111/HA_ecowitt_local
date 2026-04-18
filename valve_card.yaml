@@ -1,7 +1,7 @@
 type: vertical-stack
 cards:
   - type: custom:mushroom-entity-card
-    entity: switch.wfc01_00001234_valve
+    entity: switch.wfc01_00004185_valve
     icon: mdi:toggle-switch
     tap_action:
       action: toggle
@@ -15,7 +15,7 @@ cards:
     cards:
       - type: custom:mushroom-template-card
         primary: |-
-          {% set s = states('sensor.wfc01_00001234_run_time_live') | int %}
+          {% set s = states('sensor.wfc01_00004185_run_time_live') | int %}
           {{ '%02d:%02d' % (s // 60, s % 60) }}
         secondary: Run Time
         icon: mdi:timer-outline
@@ -26,9 +26,9 @@ cards:
         features_position: bottom
       - type: custom:mushroom-template-card
         primary: >-
-          {% set vtype = state_attr('switch.wfc01_00001234_valve', 'val_type')
-          %} {% set val = state_attr('switch.wfc01_00001234_valve', 'val') %} {%
-          set always = state_attr('switch.wfc01_00001234_valve', 'always_on') %}
+          {% set vtype = state_attr('switch.wfc01_00004185_valve', 'val_type')
+          %} {% set val = state_attr('switch.wfc01_00004185_valve', 'val') %} {%
+          set always = state_attr('switch.wfc01_00004185_valve', 'always_on') %}
           {% if always == 1 %}-- {% elif vtype == 1 and val is not none %}{{ val
           }} min {% elif vtype == 3 and val is not none %}{{ (val | float / 10)
           | round(1) }} L {% else %}--{% endif %}
@@ -39,7 +39,7 @@ cards:
         tap_action:
           action: none
       - type: custom:mushroom-template-card
-        primary: "{{ states('sensor.wfc01_00001234_flow_rate') }} L/min"
+        primary: "{{ states('sensor.wfc01_00004185_flow_rate') }} L/min"
         secondary: Flow Rate
         icon: mdi:speedometer
         icon_color: cyan
@@ -47,7 +47,7 @@ cards:
         tap_action:
           action: none
       - type: custom:mushroom-template-card
-        primary: "{{ states('sensor.wfc01_00001234_session_water_usage') }} L"
+        primary: "{{ states('sensor.wfc01_00004185_session_water_usage') }} L"
         secondary: Water Used
         tap_action:
           action: none
@@ -59,23 +59,23 @@ cards:
     cards:
       - type: entities
         entities:
-          - entity: number.wfc01_00001234_run_minutes
+          - entity: number.wfc01_00004185_run_minutes
             name: Time (min)
       - type: entities
         entities:
-          - entity: number.wfc01_00001234_run_litres
+          - entity: number.wfc01_00004185_run_litres
             name: Volume (L)
   - type: horizontal-stack
     cards:
       - type: button
-        entity: button.wfc01_00001234_start_timed_run
+        entity: button.wfc01_00004185_start_timed_run
         name: Start Timed
         icon: mdi:timer-play
         show_state: false
         tap_action:
           action: toggle
       - type: button
-        entity: button.wfc01_00001234_start_volume_run
+        entity: button.wfc01_00004185_start_volume_run
         name: Start Volume
         icon: mdi:water-plus
         show_state: false
@@ -84,8 +84,8 @@ cards:
   - type: custom:mushroom-template-card
     primary: Cycle Settings
     secondary: >-
-      {% set on_t = states('number.wfc01_00001234_cycle_on_time') | int(0) %} {%
-      set off_t = states('number.wfc01_00001234_cycle_off_time') | int(0) %} {%
+      {% set on_t = states('number.wfc01_00004185_cycle_on_time') | int(0) %} {%
+      set off_t = states('number.wfc01_00004185_cycle_off_time') | int(0) %} {%
       if on_t > 0 and off_t > 0 %}
         {{ on_t }}s on / {{ off_t }}s off
       {% else %}
@@ -111,9 +111,9 @@ cards:
     card:
       type: entities
       entities:
-        - entity: number.wfc01_00001234_cycle_on_time
+        - entity: number.wfc01_00004185_cycle_on_time
           name: Cycle On Time (seconds)
-        - entity: number.wfc01_00001234_cycle_off_time
+        - entity: number.wfc01_00004185_cycle_off_time
           name: Cycle Off Time (seconds)
   - type: custom:mushroom-template-card
     primary: Schedule

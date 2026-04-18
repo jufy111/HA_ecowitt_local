@@ -3,7 +3,7 @@
 A Home Assistant custom component that integrates Ecowitt weather gateways over your local network. All communication stays on your LAN -- no cloud dependency.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-0.3.8-blue)
+![version](https://img.shields.io/badge/version-0.5.4-blue)
 ![ha](https://img.shields.io/badge/HA-2024.1.0+-green)
 
 ## Features
@@ -151,6 +151,187 @@ automation:
           on_time: 600
           off_time: 300
 ```
+
+## Blueprints
+
+### Valve Daily Schedule
+
+A ready-made automation blueprint that opens the WFC01 valve at a scheduled time each day for a configurable duration.
+
+**Prerequisites** -- create three helpers in **Settings > Devices & Services > Helpers**:
+
+| Helper | Type | Purpose |
+|--------|------|---------|
+| `input_boolean.valve_schedule_enabled` | Toggle | Enable / disable the schedule |
+| `input_datetime.valve_schedule_time` | Time only | Daily start time |
+| `input_number.valve_schedule_duration` | Number (1-1440) | Run duration in minutes |
+
+**Install the blueprint:**
+
+[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjufy111%2FHA_ecowitt_local%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fvalve_daily_schedule.yaml)
+
+Or manually: copy `blueprints/automation/valve_daily_schedule.yaml` into your Home Assistant `config/blueprints/automation/ecowitt_local/` directory and restart.
+
+Once imported, create an automation from the blueprint and select your valve's entities from the dropdowns.
+
+## Example Dashboard Card
+
+Below is a Lovelace card for the WFC01 water valve. It requires the [Mushroom](https://github.com/piitaya/lovelace-mushroom) custom cards (available via HACS) and one helper toggle for the collapsible cycle-settings section:
+
+| Helper | Type | Purpose |
+|--------|------|---------|
+| `input_boolean.show_valve_cycle` | Toggle | Show/hide cycle settings in the card |
+
+Replace `DEVICE_ID` with your valve's ID (e.g. `00004185`).
+
+<details>
+<summary>Click to expand valve card YAML</summary>
+
+```yaml
+type: vertical-stack
+title: Water Valve
+cards:
+  - type: custom:mushroom-entity-card
+    entity: switch.wfc01_DEVICE_ID_valve
+    icon: mdi:toggle-switch
+    tap_action:
+      action: toggle
+    fill_container: true
+    layout: vertical
+    icon_color: green
+    name: Manual On/Off
+    primary_info: name
+    secondary_info: last-changed
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: |-
+          {% set s = states('sensor.wfc01_DEVICE_ID_run_time_live') | int %}
+          {{ '%02d:%02d' % (s // 60, s % 60) }}
+        secondary: Run Time
+        icon: mdi:timer-outline
+        tap_action:
+          action: none
+        color: blue
+        vertical: true
+      - type: custom:mushroom-template-card
+        primary: >-
+          {% set vtype = state_attr('switch.wfc01_DEVICE_ID_valve', 'val_type') %}
+          {% set val = state_attr('switch.wfc01_DEVICE_ID_valve', 'val') %}
+          {% set always = state_attr('switch.wfc01_DEVICE_ID_valve', 'always_on') %}
+          {% if always == 1 %}-- {% elif vtype == 1 and val is not none %}{{ val }} min
+          {% elif vtype == 3 and val is not none %}{{ (val | float / 10) | round(1) }} L
+          {% else %}--{% endif %}
+        secondary: Target
+        icon: mdi:target
+        icon_color: orange
+        layout: vertical
+        tap_action:
+          action: none
+      - type: custom:mushroom-template-card
+        primary: "{{ states('sensor.wfc01_DEVICE_ID_flow_rate') }} L/min"
+        secondary: Flow Rate
+        icon: mdi:speedometer
+        icon_color: cyan
+        layout: vertical
+        tap_action:
+          action: none
+      - type: custom:mushroom-template-card
+        primary: "{{ states('sensor.wfc01_DEVICE_ID_session_water_usage') }} L"
+        secondary: Water Used
+        tap_action:
+          action: none
+        color: cyan
+        vertical: true
+        icon: mdi:water
+  - type: horizontal-stack
+    cards:
+      - type: entities
+        entities:
+          - entity: number.wfc01_DEVICE_ID_run_minutes
+            name: Time (min)
+      - type: entities
+        entities:
+          - entity: number.wfc01_DEVICE_ID_run_litres
+            name: Volume (L)
+  - type: horizontal-stack
+    cards:
+      - type: button
+        entity: button.wfc01_DEVICE_ID_start_timed_run
+        name: Start Timed
+        icon: mdi:timer-play
+        show_state: false
+        tap_action:
+          action: toggle
+      - type: button
+        entity: button.wfc01_DEVICE_ID_start_volume_run
+        name: Start Volume
+        icon: mdi:water-plus
+        show_state: false
+        tap_action:
+          action: toggle
+  - type: custom:mushroom-template-card
+    primary: Cycle Settings
+    secondary: >-
+      {% set on_t = states('number.wfc01_DEVICE_ID_cycle_on_time') | int(0) %}
+      {% set off_t = states('number.wfc01_DEVICE_ID_cycle_off_time') | int(0) %}
+      {% if on_t > 0 and off_t > 0 %}
+        {{ on_t }}s on / {{ off_t }}s off
+      {% else %}
+        Continuous (no cycling)
+      {% endif %}
+    icon: |-
+      {% if is_state('input_boolean.show_valve_cycle', 'on') %}
+        mdi:chevron-up
+      {% else %}
+        mdi:chevron-down
+      {% endif %}
+    icon_color: purple
+    tap_action:
+      action: call-service
+      service: input_boolean.toggle
+      target:
+        entity_id: input_boolean.show_valve_cycle
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: input_boolean.show_valve_cycle
+        state: "on"
+    card:
+      type: entities
+      entities:
+        - entity: number.wfc01_DEVICE_ID_cycle_on_time
+          name: Cycle On Time (seconds)
+        - entity: number.wfc01_DEVICE_ID_cycle_off_time
+          name: Cycle Off Time (seconds)
+  - type: custom:mushroom-template-card
+    primary: Schedule
+    secondary: |-
+      {% if is_state('input_boolean.valve_schedule_enabled', 'on') %}
+        Daily at {{ states('input_datetime.valve_schedule_time') }} for {{ states('input_number.valve_schedule_duration') | int }} min
+      {% else %}
+        Disabled
+      {% endif %}
+    icon: mdi:calendar-clock
+    icon_color: |-
+      {% if is_state('input_boolean.valve_schedule_enabled', 'on') %}
+        green
+      {% else %}
+        grey
+      {% endif %}
+    tap_action:
+      action: none
+  - type: entities
+    entities:
+      - entity: input_boolean.valve_schedule_enabled
+        name: Enable Schedule
+      - entity: input_datetime.valve_schedule_time
+        name: Start Time
+      - entity: input_number.valve_schedule_duration
+        name: Duration (min)
+```
+
+</details>
 
 ## How It Works
 

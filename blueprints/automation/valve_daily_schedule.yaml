@@ -1,0 +1,74 @@
+blueprint:
+  name: Ecowitt Valve Daily Schedule
+  description: >
+    Opens an Ecowitt WFC01 water valve at a scheduled time each day for a
+    configurable duration.  Optionally enable on/off cycling to allow water
+    to soak in between bursts.
+
+    Requires the **Ecowitt Gateway (Local)** integration and three helper
+    entities that you create once (Settings > Devices & Services > Helpers):
+
+    - `input_boolean` -- enable / disable the schedule
+    - `input_datetime` (time only) -- daily start time
+    - `input_number` -- run duration in minutes
+  domain: automation
+  input:
+    schedule_enabled:
+      name: Schedule Enabled
+      description: Toggle to enable or disable the daily schedule.
+      selector:
+        entity:
+          domain: input_boolean
+    schedule_time:
+      name: Start Time
+      description: >
+        Time-only helper that sets when the valve opens each day.
+      selector:
+        entity:
+          domain: input_datetime
+    schedule_duration:
+      name: Duration (minutes)
+      description: >
+        Number helper that sets how many minutes the valve stays open.
+      selector:
+        entity:
+          domain: input_number
+    valve_run_minutes:
+      name: Valve Run Minutes Entity
+      description: >
+        The number entity exposed by the integration for setting run minutes
+        (e.g. number.wfc01_XXXXXXXX_run_minutes).
+      selector:
+        entity:
+          domain: number
+    valve_start_timed:
+      name: Valve Start Timed Button
+      description: >
+        The button entity exposed by the integration for triggering a timed
+        run (e.g. button.wfc01_XXXXXXXX_start_timed_run).
+      selector:
+        entity:
+          domain: button
+
+trigger:
+  - platform: time
+    at: !input schedule_time
+
+condition:
+  - condition: state
+    entity_id: !input schedule_enabled
+    state: "on"
+
+action:
+  - service: number.set_value
+    target:
+      entity_id: !input valve_run_minutes
+    data:
+      value: "{{ states(schedule_duration_entity) | int }}"
+    variables:
+      schedule_duration_entity: !input schedule_duration
+  - service: button.press
+    target:
+      entity_id: !input valve_start_timed
+
+mode: single
