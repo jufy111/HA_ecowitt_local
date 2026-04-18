@@ -15,18 +15,23 @@ A Home Assistant custom component that integrates Ecowitt weather gateways over 
 - **IoT device control** -- WFC01 smart water valve with timed runs, volume-based runs, and on/off cycling for irrigation
 - **Auto-discovery** -- IoT devices are discovered automatically at startup
 - **Configurable polling** -- adjust the scan interval from 1 to 600 seconds without restarting
+- Unlike the Ecowitt integrations sensors are seperated into physical devices. There is also more sensors that are now included in the official integration
+
+<img width="836" height="1320" alt="image" src="https://github.com/user-attachments/assets/1a598394-854b-4832-8905-9aa357c7e538" />
+
 
 ## Supported Devices
-
+I've only added the devices for hardware I own.
 | Device | Type | Sensors |
 |--------|------|---------|
-| **WS90** | Outdoor array | Temperature, humidity, wind speed/gust/direction, solar radiation, UV index, dew point, feels-like, capacitor voltage |
+| **WS90** | Outdoor array | Temperature, humidity, wind speed/gust/direction, solar radiation, UV index, dew point, feels-like, capacitor voltage, Event, rate, hourly, daily, weekly, monthly, yearly |
 | **WH25** | Indoor sensor | Temperature, humidity, absolute & relative pressure |
 | **WH31 / WN31** | Wireless channel | Temperature, humidity (up to 8 channels) |
 | **WH51** | Soil moisture | Moisture level, battery voltage (up to 8 channels) |
 | **Rain gauge** | Traditional | Event, rate, hourly, daily, weekly, monthly, yearly |
-| **Piezo rain** | WS90 variant | Same as rain gauge, from piezoelectric sensor |
 | **WFC01** | Water valve | Water temp, flow rate, total/session usage, battery, valve control |
+
+<img width="606" height="1224" alt="image" src="https://github.com/user-attachments/assets/694a012c-d874-4f1a-b945-d57fad804aca" />
 
 ## Installation
 
@@ -86,7 +91,7 @@ Closes the valve immediately.
 
 ### `ecowitt_lan.valve_open_timed`
 
-Opens the valve for a set duration with optional on/off cycling.
+Opens the valve for a set duration with optional on/off cycling. The valve will shut off itself when the time is reached, there is no need for home assistant to send another command to the valve when the time is reached.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -97,7 +102,7 @@ Opens the valve for a set duration with optional on/off cycling.
 
 ### `ecowitt_lan.valve_open_volume`
 
-Opens the valve until a target volume has been dispensed.
+Opens the valve until a target volume has been dispensed. The valve will shut off itself when the target volume is reached, there is no need for home assistant to send another command to the valve when the target volume is reached.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -177,6 +182,7 @@ Once imported, create an automation from the blueprint and select your valve's e
 ## Example Dashboard Card
 
 Below is a Lovelace card for the WFC01 water valve. It requires the [Mushroom](https://github.com/piitaya/lovelace-mushroom) custom cards (available via HACS) and one helper toggle for the collapsible cycle-settings section:
+<img width="553" height="923" alt="image" src="https://github.com/user-attachments/assets/3289497b-6fd4-4e11-a0ae-04b113635daf" />
 
 | Helper | Type | Purpose |
 |--------|------|---------|
@@ -351,6 +357,3 @@ Data is parsed into a flat key-value dictionary by the coordinator, which drives
 - Ecowitt gateway accessible on the local network
 - Gateway firmware that supports the local HTTP API
 
-## License
-
-This project is provided as-is for personal use. See [LICENSE](LICENSE) for details.

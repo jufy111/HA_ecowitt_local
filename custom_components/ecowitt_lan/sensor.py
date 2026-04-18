@@ -365,13 +365,13 @@ def _create_wfc01_sensors(
         EcowittIoTSensor(
             coordinator, entry, dev_id, "water_total", "Total Water Used",
             device_info,
-            icon="mdi:water", unit="m³",
+            icon="mdi:water", unit="L",
             state_class=SensorStateClass.TOTAL_INCREASING,
         ),
         EcowittIoTSensor(
             coordinator, entry, dev_id, "happen_water", "Session Start Water Value",
             device_info,
-            icon="mdi:water-outline", unit="m³",
+            icon="mdi:water-outline", unit="L",
             state_class=SensorStateClass.TOTAL,
         ),
         EcowittSessionWaterUsageSensor(
@@ -637,7 +637,7 @@ class EcowittSessionWaterUsageSensor(CoordinatorEntity[EcowittDataCoordinator], 
     """Computed sensor: water_total - happen_water."""
 
     _attr_icon = "mdi:water-check"
-    _attr_native_unit_of_measurement = "m³"
+    _attr_native_unit_of_measurement = "L"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_has_entity_name = True
 
