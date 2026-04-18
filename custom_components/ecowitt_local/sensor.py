@@ -11,8 +11,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
-    UnitOfPressure,
-    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -159,12 +157,14 @@ async def async_setup_entry(
     # INDOOR SENSORS (on gateway device)
     # ═══════════════════════════════════════════════════════
     if coordinator.data.get("has_indoor"):
+        indoor_temp_unit = coordinator.data.get("indoor_temp_unit", "°C")
+        pressure_unit = coordinator.data.get("pressure_unit", "hPa")
         entities.extend([
             EcowittSimpleSensor(
                 coordinator, entry, "indoor_temp", "Temperature",
                 gw_info,
                 device_class=SensorDeviceClass.TEMPERATURE,
-                unit=UnitOfTemperature.CELSIUS,
+                unit=indoor_temp_unit,
                 state_class=SensorStateClass.MEASUREMENT,
                 suggested_display_precision=1,
             ),
@@ -180,7 +180,7 @@ async def async_setup_entry(
                 coordinator, entry, "rel_pressure", "Relative Pressure",
                 gw_info,
                 device_class=SensorDeviceClass.PRESSURE,
-                unit=UnitOfPressure.HPA,
+                unit=pressure_unit,
                 state_class=SensorStateClass.MEASUREMENT,
                 suggested_display_precision=1,
             ),
@@ -188,7 +188,7 @@ async def async_setup_entry(
                 coordinator, entry, "abs_pressure", "Absolute Pressure",
                 gw_info,
                 device_class=SensorDeviceClass.PRESSURE,
-                unit=UnitOfPressure.HPA,
+                unit=pressure_unit,
                 state_class=SensorStateClass.MEASUREMENT,
                 suggested_display_precision=1,
             ),
@@ -200,13 +200,14 @@ async def async_setup_entry(
     for ch in coordinator.data.get("channels_present", []):
         ch_name = coordinator.data.get(f"ch{ch}_name", "")
         ch_info = channel_device_info(entry, ch, ch_name)
+        ch_temp_unit = coordinator.data.get(f"ch{ch}_temp_unit", "°C")
 
         entities.extend([
             EcowittSimpleSensor(
                 coordinator, entry, f"ch{ch}_temp", "Temperature",
                 ch_info,
                 device_class=SensorDeviceClass.TEMPERATURE,
-                unit=UnitOfTemperature.CELSIUS,
+                unit=ch_temp_unit,
                 state_class=SensorStateClass.MEASUREMENT,
                 suggested_display_precision=1,
             ),
@@ -297,7 +298,7 @@ def _create_wfc01_sensors(
             coordinator, entry, dev_id, "water_temp", "Water Temperature",
             device_info,
             device_class=SensorDeviceClass.TEMPERATURE,
-            unit=UnitOfTemperature.CELSIUS,
+            unit=coordinator.data.get("indoor_temp_unit", "°C"),
             state_class=SensorStateClass.MEASUREMENT,
         ),
         EcowittIoTSensor(
@@ -377,7 +378,9 @@ class EcowittMappedSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntit
         if "icon" in meta:
             self._attr_icon = meta["icon"]
 
-        self._attr_native_unit_of_measurement = meta.get("unit")
+        self._attr_native_unit_of_measurement = (
+            coordinator.data.get(f"{data_key}_unit") or meta.get("unit")
+        )
         self._attr_native_value = coordinator.data.get(data_key)
 
     @callback

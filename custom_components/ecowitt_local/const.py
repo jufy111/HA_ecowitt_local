@@ -58,7 +58,6 @@ COMMON_LIST_MAP: dict[str, dict] = {
     "5": {
         "name": "Vapor Pressure",
         "device_class": "pressure",
-        "unit": "kPa",
         "state_class": "measurement",
         "strip_unit": True,
     },
@@ -71,28 +70,24 @@ COMMON_LIST_MAP: dict[str, dict] = {
     "0x0B": {
         "name": "Wind Speed",
         "device_class": "wind_speed",
-        "unit": "m/s",
         "state_class": "measurement",
         "strip_unit": True,
     },
     "0x0C": {
         "name": "Wind Gust",
         "device_class": "wind_speed",
-        "unit": "m/s",
         "state_class": "measurement",
         "strip_unit": True,
     },
     "0x19": {
         "name": "Max Daily Gust",
         "device_class": "wind_speed",
-        "unit": "m/s",
         "state_class": "measurement",
         "strip_unit": True,
     },
     "0x15": {
         "name": "Solar Radiation",
         "device_class": "irradiance",
-        "unit": "W/m²",
         "state_class": "measurement",
         "strip_unit": True,
     },
@@ -117,13 +112,13 @@ COMMON_LIST_MAP: dict[str, dict] = {
 }
 
 RAIN_MAP: dict[str, dict] = {
-    "0x0D": {"name": "Event", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
-    "0x0E": {"name": "Rate", "unit": "mm/h", "strip_unit": True, "state_class": "measurement"},
-    "0x7C": {"name": "Hourly", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
-    "0x10": {"name": "Daily", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
-    "0x11": {"name": "Weekly", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
-    "0x12": {"name": "Monthly", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
-    "0x13": {"name": "Yearly", "unit": "mm", "strip_unit": True, "state_class": "total_increasing"},
+    "0x0D": {"name": "Event", "strip_unit": True, "state_class": "total_increasing"},
+    "0x0E": {"name": "Rate", "strip_unit": True, "state_class": "measurement"},
+    "0x7C": {"name": "Hourly", "strip_unit": True, "state_class": "total_increasing"},
+    "0x10": {"name": "Daily", "strip_unit": True, "state_class": "total_increasing"},
+    "0x11": {"name": "Weekly", "strip_unit": True, "state_class": "total_increasing"},
+    "0x12": {"name": "Monthly", "strip_unit": True, "state_class": "total_increasing"},
+    "0x13": {"name": "Yearly", "strip_unit": True, "state_class": "total_increasing"},
 }
 
 UNIT_MAP = {
@@ -131,6 +126,17 @@ UNIT_MAP = {
     "F": "°F",
     "hPa": "hPa",
     "inHg": "inHg",
+    "mmHg": "mmHg",
+}
+
+# Normalize unit strings extracted from value text (e.g. "1.57 mph" -> "mph")
+UNIT_NORMALIZE: dict[str, str] = {
+    "W/m2": "W/m²",
+    "in/Hr": "in/h",
+    "mm/Hr": "mm/h",
+    "Klux": "klx",
+    "Kfc": "kfc",
+    "BFT": "Bft",
 }
 
 IOT_MODEL_MAP = {

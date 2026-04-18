@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api_client import EcowittApiClient, EcowittApiError
-from .const import DOMAIN, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, DEFAULT_SCAN_INTERVAL, UNIT_MAP, UNIT_NORMALIZE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,14 +35,27 @@ def parse_value(val: str | None) -> float | str | None:
     return None
 
 
+def _safe_int(val, default: int = 0) -> int:
+    """Convert to int, returning default if the value is non-numeric (e.g. '--')."""
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def extract_unit(val: str | None) -> str | None:
-    """Extract trailing unit from a value string like '7.92 km/h' -> 'km/h'."""
+    """Extract trailing unit from a value string like '7.92 km/h' -> 'km/h'.
+
+    Normalizes known variants (e.g. 'W/m2' -> 'W/m²').
+    """
     if val is None:
         return None
     match = _NUMERIC_RE.match(val.strip())
     if match:
         unit = match.group(2).strip()
-        return unit if unit else None
+        if not unit:
+            return None
+        return UNIT_NORMALIZE.get(unit, unit)
     return None
 
 
@@ -99,6 +112,10 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 detected = extract_unit(raw_val)
                 if detected:
                     data[f"common_{sid}_unit"] = detected
+                elif "unit" in item:
+                    mapped = UNIT_MAP.get(item["unit"])
+                    if mapped:
+                        data[f"common_{sid}_unit"] = mapped
 
             # ── rain ─────────────────────────────────────
             for item in raw.get("rain", []):
@@ -132,9 +149,15 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             for item in raw.get("wh25", []):
                 data["indoor_temp"] = float(item.get("intemp", 0))
                 data["indoor_humidity"] = parse_value(item.get("inhumi", "0"))
-                data["indoor_temp_unit"] = item.get("unit", "C")
-                data["abs_pressure"] = parse_value(item.get("abs", "0"))
-                data["rel_pressure"] = parse_value(item.get("rel", "0"))
+                temp_unit = UNIT_MAP.get(item.get("unit", "C"), "°C")
+                data["indoor_temp_unit"] = temp_unit
+                abs_raw = item.get("abs", "0")
+                rel_raw = item.get("rel", "0")
+                data["abs_pressure"] = parse_value(abs_raw)
+                data["rel_pressure"] = parse_value(rel_raw)
+                pressure_unit = extract_unit(abs_raw)
+                if pressure_unit:
+                    data["pressure_unit"] = pressure_unit
 
             # ── ch_aisle ─────────────────────────────────
             data["channels_present"] = []
@@ -145,6 +168,8 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 data[f"ch{ch}_humidity"] = parse_value(item.get("humidity", "0"))
                 data[f"ch{ch}_battery"] = int(item.get("battery", 0))
                 data[f"ch{ch}_name"] = item.get("name", "")
+                ch_temp_unit = UNIT_MAP.get(item.get("unit", "C"), "°C")
+                data[f"ch{ch}_temp_unit"] = ch_temp_unit
 
             # ── ch_soil ──────────────────────────────────
             data["soil_channels_present"] = []
@@ -158,9 +183,9 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             # ── debug ────────────────────────────────────
             for item in raw.get("debug", []):
-                data["gw_heap"] = int(item.get("heap", 0))
-                data["gw_runtime"] = int(item.get("runtime", 0))
-                data["gw_interval"] = int(item.get("usr_interval", 60))
+                data["gw_heap"] = _safe_int(item.get("heap"), 0)
+                data["gw_runtime"] = _safe_int(item.get("runtime"), 0)
+                data["gw_interval"] = _safe_int(item.get("usr_interval"), 60)
 
             # ── presence flags ───────────────────────────
             data["has_rain"] = bool(raw.get("rain"))
