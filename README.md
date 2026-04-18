@@ -3,7 +3,7 @@
 A Home Assistant custom component that integrates Ecowitt weather gateways over your local network. All communication stays on your LAN -- no cloud dependency.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-1.0.4-blue)
+![version](https://img.shields.io/badge/version-1.0.5-blue)
 ![ha](https://img.shields.io/badge/HA-2024.1.0+-green)
 
 ## Features
@@ -357,3 +357,5 @@ Data is parsed into a flat key-value dictionary by the coordinator, which drives
 - Ecowitt gateway accessible on the local network
 - Gateway firmware that supports the local HTTP API
 
+## Known Issues
+ - WH/31 Reports 0% Battery - This is the gateway response. There is nothing I can do unless ecowitt update the gateway firmware to fix it.
