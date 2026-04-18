@@ -3,7 +3,7 @@
 A Home Assistant custom component that integrates Ecowitt weather gateways over your local network. All communication stays on your LAN -- no cloud dependency.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-0.5.4-blue)
+![version](https://img.shields.io/badge/version-1.0.4-blue)
 ![ha](https://img.shields.io/badge/HA-2024.1.0+-green)
 
 ## Features
@@ -21,14 +21,14 @@ A Home Assistant custom component that integrates Ecowitt weather gateways over 
 
 
 ## Supported Devices
-I've only added the devices for hardware I own.
+I've only added the devices for hardware I own. This is a GW2000 gateway and the below sensors
 | Device | Type | Sensors |
 |--------|------|---------|
 | **WS90** | Outdoor array | Temperature, humidity, wind speed/gust/direction, solar radiation, UV index, dew point, feels-like, capacitor voltage, Event, rate, hourly, daily, weekly, monthly, yearly |
 | **WH25** | Indoor sensor | Temperature, humidity, absolute & relative pressure |
 | **WH31 / WN31** | Wireless channel | Temperature, humidity (up to 8 channels) |
 | **WH51** | Soil moisture | Moisture level, battery voltage (up to 8 channels) |
-| **Rain gauge** | Traditional | Event, rate, hourly, daily, weekly, monthly, yearly |
+| **WH40** | Rain gauge- Traditional | Event, rate, hourly, daily, weekly, monthly, yearly |
 | **WFC01** | Water valve | Water temp, flow rate, total/session usage, battery, valve control |
 
 <img width="606" height="1224" alt="image" src="https://github.com/user-attachments/assets/694a012c-d874-4f1a-b945-d57fad804aca" />
