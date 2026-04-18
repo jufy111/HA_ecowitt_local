@@ -1,5 +1,5 @@
 {
-  "domain": "ecowitt_gw",
+  "domain": "ecowitt_local",
   "name": "Ecowitt Gateway (Local)",
   "codeowners": ["@jufy111"],
   "config_flow": true,
