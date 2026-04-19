@@ -5,6 +5,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -45,7 +46,7 @@ async def async_setup_entry(
                 icon="mdi:water",
             ),
             EcowittIoTRfState(
-                coordinator, entry, dev_id, dev_info,
+                coordinator, entry, dev_id, dev_info, EntityCategory.DIAGNOSTIC #ttt
             ),
         ])
 
@@ -97,12 +98,16 @@ class EcowittIoTRfState(CoordinatorEntity[EcowittDataCoordinator], BinarySensorE
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, entry, dev_id, device_info):
+    def __init__(self, coordinator, entry, dev_id, device_info, entity_category=None):
         super().__init__(coordinator)
         self._device_id = dev_id
         self._attr_unique_id = f"{entry.entry_id}_iot_{dev_id}_rfstate"
         self._attr_name = "RF Connected"
         self._attr_device_info = device_info
+        
+        ## tt add enity cat
+        if entity_category:
+            self._attr_entity_category = entity_category
 
         self._update_is_on()
 

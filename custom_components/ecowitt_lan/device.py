@@ -4,7 +4,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 
-from .const import DOMAIN, IOT_MODEL_MAP
+from .const import DOMAIN, IOT_MODEL_MAP, SENSOR_TYPE_MODEL_MAP
 
 
 def gateway_device_info(entry: ConfigEntry) -> DeviceInfo:
@@ -18,13 +18,18 @@ def gateway_device_info(entry: ConfigEntry) -> DeviceInfo:
     )
 
 
-def outdoor_device_info(entry: ConfigEntry, ws90_version: str = "") -> DeviceInfo:
+def outdoor_device_info(
+    entry: ConfigEntry, sensor_id: str = "", sensor_type: str = "",
+    ws90_version: str = "",
+) -> DeviceInfo:
     """Outdoor / WS90 sensor array (includes piezo rain)."""
+    model = SENSOR_TYPE_MODEL_MAP.get(sensor_type, "WS90")
+    identifier = sensor_id if sensor_id else f"{entry.entry_id}_outdoor"
     info = DeviceInfo(
-        identifiers={(DOMAIN, f"{entry.entry_id}_outdoor")},
-        name="Outdoor Sensor (WS90)",
+        identifiers={(DOMAIN, identifier)},
+        name=f"Outdoor Sensor ({model})",
         manufacturer="Ecowitt",
-        model="WS90",
+        model=model,
         via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
     )
     if ws90_version:
@@ -32,56 +37,68 @@ def outdoor_device_info(entry: ConfigEntry, ws90_version: str = "") -> DeviceInf
     return info
 
 
-def rain_device_info(entry: ConfigEntry) -> DeviceInfo:
+def rain_device_info(
+    entry: ConfigEntry, sensor_id: str = "", sensor_type: str = "",
+) -> DeviceInfo:
     """Traditional rain gauge."""
+    model = SENSOR_TYPE_MODEL_MAP.get(sensor_type, "Rain Gauge")
+    identifier = sensor_id if sensor_id else f"{entry.entry_id}_rain"
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{entry.entry_id}_rain")},
+        identifiers={(DOMAIN, identifier)},
         name="Rain Gauge",
         manufacturer="Ecowitt",
-        model="Rain Gauge",
+        model=model,
         via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
     )
 
 
-
 def channel_device_info(
-    entry: ConfigEntry, channel: int | str, name: str = ""
+    entry: ConfigEntry, channel: int | str, name: str = "",
+    sensor_id: str = "", sensor_type: str = "",
 ) -> DeviceInfo:
     """Per-channel wireless T/H sensor."""
+    model = SENSOR_TYPE_MODEL_MAP.get(sensor_type, "WH31")
     label = name.strip() if name and name.strip() else f"Channel {channel}"
+    identifier = sensor_id if sensor_id else f"{entry.entry_id}_ch{channel}"
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{entry.entry_id}_ch{channel}")},
-        name=f"{label} Sensor",
+        identifiers={(DOMAIN, identifier)},
+        name=label,
         manufacturer="Ecowitt",
-        model="WH31 / WN31",
+        model=model,
         via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
     )
 
 
 def soil_device_info(
-    entry: ConfigEntry, channel: int | str, name: str = ""
+    entry: ConfigEntry, channel: int | str, name: str = "",
+    sensor_id: str = "", sensor_type: str = "",
 ) -> DeviceInfo:
     """Per-channel soil moisture sensor."""
+    model = SENSOR_TYPE_MODEL_MAP.get(sensor_type, "WH51")
     label = name.strip() if name and name.strip() else f"Soil {channel}"
+    identifier = sensor_id if sensor_id else f"{entry.entry_id}_soil{channel}"
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{entry.entry_id}_soil{channel}")},
-        name=f"{label} Sensor",
+        identifiers={(DOMAIN, identifier)},
+        name=label,
         manufacturer="Ecowitt",
-        model="WH51",
+        model=model,
         via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
     )
 
 
 def temp_device_info(
-    entry: ConfigEntry, sensor_id: str, name: str = ""
+    entry: ConfigEntry, channel: int | str, name: str = "",
+    sensor_id: str = "", sensor_type: str = "",
 ) -> DeviceInfo:
     """Per-channel temperature-only sensor (WH34)."""
-    label = name.strip() if name and name.strip() else f"Temp {sensor_id}"
+    model = SENSOR_TYPE_MODEL_MAP.get(sensor_type, "WH34")
+    label = name.strip() if name and name.strip() else f"Temp {channel}"
+    identifier = sensor_id if sensor_id else f"{entry.entry_id}_temp{channel}"
     return DeviceInfo(
-        identifiers={(DOMAIN, f"temp_{sensor_id}")},
-        name=f"{label} Sensor",
+        identifiers={(DOMAIN, identifier)},
+        name=label,
         manufacturer="Ecowitt",
-        model="WH34",
+        model=model,
         via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
     )
 

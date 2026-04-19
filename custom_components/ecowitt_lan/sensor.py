@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    EntityCategory,
     PERCENTAGE,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -51,17 +52,20 @@ async def async_setup_entry(
             coordinator, entry, "gw_runtime", "Gateway Uptime",
             gw_info, icon="mdi:timer", unit="s",
             state_class=SensorStateClass.TOTAL_INCREASING,
+            entity_category=EntityCategory.DIAGNOSTIC,
         ))
     if "gw_heap" in coordinator.data:
         entities.append(EcowittSimpleSensor(
             coordinator, entry, "gw_heap", "Gateway Free Memory",
             gw_info, icon="mdi:memory", unit="bytes",
             state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
         ))
     if "gw_interval" in coordinator.data:
         entities.append(EcowittSimpleSensor(
-            coordinator, entry, "gw_interval", "Gateway Report Interval",
+            coordinator, entry, "gw_interval", "Sensor Diagnostic Report Interval",
             gw_info, icon="mdi:update", unit="s",
+            entity_category=EntityCategory.DIAGNOSTIC,
         ))
 
     # ═══════════════════════════════════════════════════════
@@ -72,7 +76,12 @@ async def async_setup_entry(
 
     if has_outdoor or has_piezo:
         ws90_ver = coordinator.data.get("ws90_version", "")
-        outdoor_info = outdoor_device_info(entry, ws90_ver)
+        outdoor_sid = coordinator.data.get("outdoor_sensor_id", "")
+        outdoor_stype = coordinator.data.get("outdoor_sensor_type", "")
+        outdoor_info = outdoor_device_info(
+            entry, sensor_id=outdoor_sid, sensor_type=outdoor_stype,
+            ws90_version=ws90_ver,
+        )
 
         # common_list weather sensors
         if has_outdoor:
@@ -83,6 +92,13 @@ async def async_setup_entry(
                         EcowittMappedSensor(coordinator, entry, key, meta, outdoor_info)
                     )
 
+            if "outdoor_sensor_id" in coordinator.data:
+                entities.append(EcowittSimpleSensor(
+                    coordinator, entry, "outdoor_sensor_id", "Sensor ID",
+                    outdoor_info,
+                    icon="mdi:identifier",
+                    entity_category=EntityCategory.DIAGNOSTIC,
+                ))
             if "outdoor_rssi" in coordinator.data:
                 entities.append(EcowittSimpleSensor(
                     coordinator, entry, "outdoor_rssi", "RSSI",
@@ -90,6 +106,7 @@ async def async_setup_entry(
                     device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                     unit="dBm",
                     state_class=SensorStateClass.MEASUREMENT,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                 ))
             if "outdoor_signal" in coordinator.data:
                 entities.append(EcowittSimpleSensor(
@@ -97,6 +114,7 @@ async def async_setup_entry(
                     outdoor_info,
                     icon="mdi:signal",
                     state_class=SensorStateClass.MEASUREMENT,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                 ))
 
             if "ws90_cap_voltage" in coordinator.data:
@@ -105,6 +123,7 @@ async def async_setup_entry(
                     outdoor_info,
                     device_class=SensorDeviceClass.VOLTAGE, unit="V",
                     state_class=SensorStateClass.MEASUREMENT,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     suggested_display_precision=1,
                 ))
 
@@ -126,6 +145,7 @@ async def async_setup_entry(
                     device_class=SensorDeviceClass.BATTERY,
                     unit=PERCENTAGE,
                     state_class=SensorStateClass.MEASUREMENT,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     value_map=BATTERY_LEVEL_MAP,
                 ))
             if "piezo_voltage" in coordinator.data:
@@ -134,6 +154,7 @@ async def async_setup_entry(
                     outdoor_info,
                     device_class=SensorDeviceClass.VOLTAGE, unit="V",
                     state_class=SensorStateClass.MEASUREMENT,
+                    entity_category=EntityCategory.DIAGNOSTIC,
                     suggested_display_precision=1,
                 ))
 
@@ -141,7 +162,11 @@ async def async_setup_entry(
     # RAIN GAUGE DEVICE
     # ═══════════════════════════════════════════════════════
     if coordinator.data.get("has_rain"):
-        rain_info = rain_device_info(entry)
+        rain_sid = coordinator.data.get("rain_sensor_id", "")
+        rain_stype = coordinator.data.get("rain_sensor_type", "")
+        rain_info = rain_device_info(
+            entry, sensor_id=rain_sid, sensor_type=rain_stype,
+        )
 
         for sensor_id, meta in RAIN_MAP.items():
             key = f"rain_{sensor_id}"
@@ -159,6 +184,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.BATTERY,
                 unit=PERCENTAGE,
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 value_map=BATTERY_LEVEL_MAP,
             ))
         if "rain_voltage" in coordinator.data:
@@ -167,7 +193,15 @@ async def async_setup_entry(
                 rain_info,
                 device_class=SensorDeviceClass.VOLTAGE, unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 suggested_display_precision=1,
+            ))
+        if "rain_sensor_id" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, "rain_sensor_id", "Sensor ID",
+                rain_info,
+                icon="mdi:identifier",
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
         if "rain_rssi" in coordinator.data:
             entities.append(EcowittSimpleSensor(
@@ -176,6 +210,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 unit="dBm",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
         if "rain_signal" in coordinator.data:
             entities.append(EcowittSimpleSensor(
@@ -183,6 +218,7 @@ async def async_setup_entry(
                 rain_info,
                 icon="mdi:signal",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
 
     # ═══════════════════════════════════════════════════════
@@ -231,7 +267,12 @@ async def async_setup_entry(
     # ═══════════════════════════════════════════════════════
     for ch in coordinator.data.get("channels_present", []):
         ch_name = coordinator.data.get(f"ch{ch}_name", "")
-        ch_info = channel_device_info(entry, ch, ch_name)
+        ch_sid = coordinator.data.get(f"ch{ch}_sensor_id", "")
+        ch_stype = coordinator.data.get(f"ch{ch}_sensor_type", "")
+        ch_info = channel_device_info(
+            entry, ch, ch_name,
+            sensor_id=ch_sid, sensor_type=ch_stype,
+        )
         ch_temp_unit = coordinator.data.get(f"ch{ch}_temp_unit", "°C")
 
         entities.extend([
@@ -256,10 +297,18 @@ async def async_setup_entry(
                 ch_info,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 unit=PERCENTAGE,
                 value_map=BATTERY_LEVEL_MAP,
             ),
         ])
+        if f"ch{ch}_sensor_id" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"ch{ch}_sensor_id", "Sensor ID",
+                ch_info,
+                icon="mdi:identifier",
+                entity_category=EntityCategory.DIAGNOSTIC,
+            ))
         if f"ch{ch}_rssi" in coordinator.data:
             entities.append(EcowittSimpleSensor(
                 coordinator, entry, f"ch{ch}_rssi", "RSSI",
@@ -267,6 +316,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 unit="dBm",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
         if f"ch{ch}_signal" in coordinator.data:
             entities.append(EcowittSimpleSensor(
@@ -274,6 +324,7 @@ async def async_setup_entry(
                 ch_info,
                 icon="mdi:signal",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
 
     # ═══════════════════════════════════════════════════════
@@ -281,7 +332,12 @@ async def async_setup_entry(
     # ═══════════════════════════════════════════════════════
     for ch in coordinator.data.get("soil_channels_present", []):
         soil_name = coordinator.data.get(f"soil{ch}_name", "")
-        soil_info = soil_device_info(entry, ch, soil_name)
+        soil_sid = coordinator.data.get(f"soil{ch}_sensor_id", "")
+        soil_stype = coordinator.data.get(f"soil{ch}_sensor_type", "")
+        soil_info = soil_device_info(
+            entry, ch, soil_name,
+            sensor_id=soil_sid, sensor_type=soil_stype,
+        )
 
         entities.extend([
             EcowittSimpleSensor(
@@ -298,6 +354,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.VOLTAGE,
                 unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
@@ -305,10 +362,18 @@ async def async_setup_entry(
                 soil_info,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 unit=PERCENTAGE,
                 value_map=BATTERY_LEVEL_MAP,
             ),
         ])
+        if f"soil{ch}_sensor_id" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"soil{ch}_sensor_id", "Sensor ID",
+                soil_info,
+                icon="mdi:identifier",
+                entity_category=EntityCategory.DIAGNOSTIC,
+            ))
         if f"soil{ch}_rssi" in coordinator.data:
             entities.append(EcowittSimpleSensor(
                 coordinator, entry, f"soil{ch}_rssi", "RSSI",
@@ -316,6 +381,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 unit="dBm",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
         if f"soil{ch}_signal" in coordinator.data:
             entities.append(EcowittSimpleSensor(
@@ -323,6 +389,7 @@ async def async_setup_entry(
                 soil_info,
                 icon="mdi:signal",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
 
 
@@ -332,10 +399,12 @@ async def async_setup_entry(
     # ═══════════════════════════════════════════════════════
     for ch in coordinator.data.get("temp_channels_present", []):
         temp_name = coordinator.data.get(f"temp{ch}_name", "")
-        sensor_id = coordinator.data.get(f"temp{ch}_sensor_id", "")
-        if not sensor_id:
-            sensor_id = f"temp_ch{ch}"
-        temp_info = temp_device_info(entry, sensor_id, temp_name)
+        temp_sid = coordinator.data.get(f"temp{ch}_sensor_id", "")
+        temp_stype = coordinator.data.get(f"temp{ch}_sensor_type", "")
+        temp_info = temp_device_info(
+            entry, ch, temp_name,
+            sensor_id=temp_sid, sensor_type=temp_stype,
+        )
         temp_unit = coordinator.data.get(f"temp{ch}_temp_unit", "°C")
 
         entities.extend([
@@ -353,6 +422,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.VOLTAGE,
                 unit="V",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 suggested_display_precision=1,
             ),
             EcowittSimpleSensor(
@@ -360,10 +430,18 @@ async def async_setup_entry(
                 temp_info,
                 device_class=SensorDeviceClass.BATTERY,
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
                 unit=PERCENTAGE,
                 value_map=BATTERY_LEVEL_MAP,
             ),
         ])
+        if f"temp{ch}_sensor_id" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_sensor_id", "Sensor ID",
+                temp_info,
+                icon="mdi:identifier",
+                entity_category=EntityCategory.DIAGNOSTIC,
+            ))
         if f"temp{ch}_rssi" in coordinator.data:
             entities.append(EcowittSimpleSensor(
                 coordinator, entry, f"temp{ch}_rssi", "RSSI",
@@ -371,6 +449,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.SIGNAL_STRENGTH,
                 unit="dBm",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
         if f"temp{ch}_signal" in coordinator.data:
             entities.append(EcowittSimpleSensor(
@@ -378,6 +457,7 @@ async def async_setup_entry(
                 temp_info,
                 icon="mdi:signal",
                 state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ))
 
     # ═══════════════════════════════════════════════════════
@@ -451,6 +531,7 @@ def _create_wfc01_sensors(
             device_info,
             device_class=SensorDeviceClass.BATTERY,
             state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
             unit=PERCENTAGE,
             value_map=BATTERY_LEVEL_MAP,
         ),
@@ -459,6 +540,7 @@ def _create_wfc01_sensors(
             device_info,
             icon="mdi:signal",
             state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
         ),
         EcowittIoTSensor(
             coordinator, entry, dev_id, "gw_rssi", "Gateway RSSI",
@@ -466,6 +548,7 @@ def _create_wfc01_sensors(
             device_class=SensorDeviceClass.SIGNAL_STRENGTH,
             unit="dBm",
             state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ]
 
@@ -513,6 +596,7 @@ class EcowittSimpleSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntit
         self, coordinator, entry, data_key, name, device_info,
         device_class=None, unit=None, state_class=None, icon=None,
         value_map=None, suggested_display_precision=None,
+        entity_category=None,
     ):
         super().__init__(coordinator)
         self._data_key = data_key
@@ -532,6 +616,8 @@ class EcowittSimpleSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntit
             self._attr_icon = icon
         if suggested_display_precision is not None:
             self._attr_suggested_display_precision = suggested_display_precision
+        if entity_category:
+            self._attr_entity_category = entity_category
 
         self._update_native_value()
 
@@ -558,8 +644,8 @@ class EcowittIoTSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):
 
     def __init__(
         self, coordinator, entry, device_id, field, name, device_info,
-        device_class=None, unit=None, state_class=None, icon=None,
-        value_map=None,
+        device_class=None, unit=None, state_class=None, entity_category=None,
+        icon=None, value_map=None,
     ):
         super().__init__(coordinator)
         self._device_id = device_id
@@ -576,6 +662,8 @@ class EcowittIoTSensor(CoordinatorEntity[EcowittDataCoordinator], SensorEntity):
             self._attr_native_unit_of_measurement = unit
         if state_class:
             self._attr_state_class = state_class
+        if entity_category:
+            self._attr_entity_category = entity_category
         if icon:
             self._attr_icon = icon
 

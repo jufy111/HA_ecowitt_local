@@ -3,7 +3,7 @@
 A Home Assistant custom component that integrates Ecowitt weather gateways over your local network. All communication stays on your LAN -- no cloud dependency.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-1.0.6-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 ![ha](https://img.shields.io/badge/HA-2024.1.0+-green)
 
 ## Features

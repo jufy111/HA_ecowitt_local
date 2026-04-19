@@ -236,6 +236,7 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                             si_data[f"{device_key}_rssi"] = _safe_int(rssi)
                         if signal and signal != "--":
                             si_data[f"{device_key}_signal"] = _safe_int(signal)
+                        si_data[f"{device_key}_sensor_type"] = stype
                         sid = sensor.get("id")
                         if sid and sid != "FFFFFFFF":
                             si_data[f"{device_key}_sensor_id"] = sid
