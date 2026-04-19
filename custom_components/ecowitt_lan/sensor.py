@@ -26,6 +26,7 @@ from .device import (
     rain_device_info,
     channel_device_info,
     soil_device_info,
+    temp_device_info,
     iot_device_info,
 )
 
@@ -325,6 +326,59 @@ async def async_setup_entry(
             ))
 
 
+
+    # ═══════════════════════════════════════════════════════
+    # TEMP DEVICES — WH34 (1 device per channel, keyed by sensor_id)
+    # ═══════════════════════════════════════════════════════
+    for ch in coordinator.data.get("temp_channels_present", []):
+        temp_name = coordinator.data.get(f"temp{ch}_name", "")
+        sensor_id = coordinator.data.get(f"temp{ch}_sensor_id", "")
+        if not sensor_id:
+            sensor_id = f"temp_ch{ch}"
+        temp_info = temp_device_info(entry, sensor_id, temp_name)
+        temp_unit = coordinator.data.get(f"temp{ch}_temp_unit", "°C")
+
+        entities.extend([
+            EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_temp", "Temperature",
+                temp_info,
+                device_class=SensorDeviceClass.TEMPERATURE,
+                unit=temp_unit,
+                state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
+            ),
+            EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_voltage", "Battery Voltage",
+                temp_info,
+                device_class=SensorDeviceClass.VOLTAGE,
+                unit="V",
+                state_class=SensorStateClass.MEASUREMENT,
+                suggested_display_precision=1,
+            ),
+            EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_battery", "Battery",
+                temp_info,
+                device_class=SensorDeviceClass.BATTERY,
+                state_class=SensorStateClass.MEASUREMENT,
+                unit=PERCENTAGE,
+                value_map=BATTERY_LEVEL_MAP,
+            ),
+        ])
+        if f"temp{ch}_rssi" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_rssi", "RSSI",
+                temp_info,
+                device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+                unit="dBm",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
+        if f"temp{ch}_signal" in coordinator.data:
+            entities.append(EcowittSimpleSensor(
+                coordinator, entry, f"temp{ch}_signal", "Signal",
+                temp_info,
+                icon="mdi:signal",
+                state_class=SensorStateClass.MEASUREMENT,
+            ))
 
     # ═══════════════════════════════════════════════════════
     # IOT DEVICES (auto-discovered, 1 device per IoT)

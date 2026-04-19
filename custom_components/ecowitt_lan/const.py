@@ -35,6 +35,7 @@ DEVICE_TYPE_OUTDOOR = "outdoor"
 DEVICE_TYPE_RAIN = "rain_gauge"
 DEVICE_TYPE_CHANNEL = "channel"
 DEVICE_TYPE_SOIL = "soil"
+DEVICE_TYPE_TEMP = "temp"
 DEVICE_TYPE_IOT = "iot"
 
 # ── Sensor ID mapping (common_list) ─────────────────
@@ -184,4 +185,7 @@ SENSOR_TYPE_DEVICE_MAP: dict[str, str] = {
     # WH51 Soil Moisture CH9-CH16 (extended)
     "58": "soil9", "59": "soil10", "60": "soil11", "61": "soil12",
     "62": "soil13", "63": "soil14", "64": "soil15", "65": "soil16",
+    # WH34 Temperature CH1-CH8
+    "31": "temp1", "32": "temp2", "33": "temp3", "34": "temp4",
+    "35": "temp5", "36": "temp6", "37": "temp7", "38": "temp8",
 }

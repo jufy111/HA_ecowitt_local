@@ -181,6 +181,18 @@ class EcowittDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 ch_temp_unit = UNIT_MAP.get(item.get("unit", "C"), "°C")
                 data[f"ch{ch}_temp_unit"] = ch_temp_unit
 
+            # ── ch_temp (WH34) ───────────────────────────
+            data["temp_channels_present"] = []
+            for item in raw.get("ch_temp", []):
+                ch = item["channel"]
+                data["temp_channels_present"].append(ch)
+                data[f"temp{ch}_temp"] = float(item.get("temp", 0))
+                data[f"temp{ch}_name"] = item.get("name", "")
+                data[f"temp{ch}_battery"] = int(item.get("battery", 0))
+                data[f"temp{ch}_voltage"] = float(item.get("voltage", 0))
+                ch_temp_unit = UNIT_MAP.get(item.get("unit", "C"), "°C")
+                data[f"temp{ch}_temp_unit"] = ch_temp_unit
+
             # ── ch_soil ──────────────────────────────────
             data["soil_channels_present"] = []
             for item in raw.get("ch_soil", []):

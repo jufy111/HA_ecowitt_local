@@ -72,6 +72,20 @@ def soil_device_info(
     )
 
 
+def temp_device_info(
+    entry: ConfigEntry, sensor_id: str, name: str = ""
+) -> DeviceInfo:
+    """Per-channel temperature-only sensor (WH34)."""
+    label = name.strip() if name and name.strip() else f"Temp {sensor_id}"
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"temp_{sensor_id}")},
+        name=f"{label} Sensor",
+        manufacturer="Ecowitt",
+        model="WH34",
+        via_device=(DOMAIN, f"{entry.entry_id}_gateway"),
+    )
+
+
 def iot_device_info(
     entry: ConfigEntry, dev_id: int, model: int, iot_data: dict
 ) -> DeviceInfo:
